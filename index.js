@@ -4,25 +4,53 @@ let game = {
 	wordDict: [],
 	word: null,
 	currentLetter: null,
-	guessesRemaining: 6,
+	// Initialize default settings
+	settings: {
+		guessesRemaining: 6,
+	}
 }
-let gb = document.getElementById('guess-box');
-let url = 'https://cors-anywhere.herokuapp.com/http://app.linkedin-reach.io/words';
-let fileReader = new FileReader();
+let gb = document.getElementById('guess-box'),
+	guessInputElem = document.getElementById('guess-input'),
+	url = 'https://cors-anywhere.herokuapp.com/http://app.linkedin-reach.io/words',
+	fileReader = new FileReader();
 
 
 updateWordDict();
 
 
 
-// ~~~~~~~~~~~~~~~~ Function Declarations
+// ~~~~~~~~~~~~~~~~ Event Listeners
 
 
 // This gets called after the 'blob' is read into text in updateWordDict
 fileReader.addEventListener('loadend', e => {
-	game.wordDict = e.srcElement.result.split('\n');
-	console.log(game.wordDict);
-})
+	// Update word dictionary
+	game.wordDict = e.srcElement.result.split('\n') ;
+	game.word = game.wordDict[ Math.floor( Math.random() * game.wordDict.length )];
+});
+
+guessInputElem.addEventListener('keydown', e => {
+	e.preventDefault()								// Needed to prevent 'double-letter' entry
+    if (e.keyCode === 13) {							// Handle 'Enter' key press
+        submitCharacter();
+	}
+	else if (e.keyCode === 8) {						// Handle 'Backspace'
+		guessInputElem.value = '';
+	}
+	else if (e.keyCode > 64 && e.keyCode < 91 ) {	// Handle any other valid character
+		guessInputElem.value = String(e.key).toUpperCase();
+	}
+});
+
+// ~~~~~~~~~~~~~~~~ Function Declarations
+
+function submitCharacter() {
+
+}
+
+function getURLParamsBasedOnSettings(settings) {
+
+};
 
 
 // Updates the game.wordDict with the new requested dictionary
