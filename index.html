@@ -4,27 +4,48 @@
 <head>
 	<title>LinkedIn </title>
 	<style>
-		body {
+		html, body {
 			margin: 0;
 			padding: 0;
-			width:100%;
-			height:100%;
+			width: 100%;
+			height: 100%;
 			display: flex;
 			flex-direction: column;
 			font-size: 20px;
 			font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;
 		}
+		#modal-background {
+			display: none;
+			position: fixed;
+			z-index: 1;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: #000;
+			background-color: rgba(0,0,0,0.4);
+		}
+		#game-settings {
+			z-index: 2;
+			background-color: #fefefe;
+  			margin: 15% auto;
+			padding: 20px;
+			border: 1px solid #2196f3;
+			width: 80%;
+		}
+
 		#nav-bar {
 			overflow: hidden;
  			background-color: #2196f3;
 			top: 0;
 			width: 100%;
+			height: 10%;
 			display: flex;
 			flex-wrap: wrap;
 			justify-content:flex-end;
 		}
 		#nav-bar button {
-			height: 60px;
+			height: 100%;
 			padding: 10px;
 			border: none;
 			outline: none;
@@ -41,18 +62,53 @@
 		#nav-bar button:active {
 			background-color: #0d47a1;
 		}
+
 		#game-area {
 			display: flex;
 			flex-direction: column;
 			align-items: center;
+			width: 100%;
+			height: 90%;
 		}
+
 		#secret-keeper-zone {
 			display: flex;
+			flex-direction: column;
+			align-items: center;
+			width: 100%;
+			height: 30%;
 		}
+		#remaining-guesses {
+			font-size: 30px;
+			margin: 0;
+			padding: 0;
+			color: lightgray;
+		}
+		#reveal-container {
+			display: flex;
+			flex-wrap: nowrap;
+			background-color: #d9eaf8;
+			width: 100%;
+			height: 60%;
+		}
+		.reveal-box {
+			background-color: #bbdefb;
+			border: 1px solid #1565c0;
+			font-size: 5em;
+			text-align: center;
+			align-items: center;
+			align-content: center;
+			position: relative;
+			padding: 12px;
+			margin: 12px;
+		}
+
 		#guesser-zone {
 			display: flex;
 			flex-direction: column;
 			align-items: center;
+			width: 100%;
+			height: 70%;
 		}
 		#guess-input {
 			border-radius: 100px;
@@ -74,6 +130,12 @@
 			-o-animation:      blue-shift 4s infinite; /* Opera 12+ */
 			animation:         blue-shift 4s infinite; /* IE 10+, Fx 29+ */
 		}
+		#success-text {
+			color: green;
+		}
+		#error-text {
+			color: firebrick;
+		}
 		.small-text {
 			font-size: 18px;
 			font-style: italic;
@@ -88,18 +150,25 @@
 
 <body>
 	<div id='nav-bar'>
-		<button>Game Options</button>
+		<button id='game-options-button'>Game Options</button>
+		<div id='modal-background'>
+				<div id='game-settings'></div>
+		</div>
 	</div>
 	<div id='game-area'>
 		<div id='secret-keeper-zone'>
-			<p>HEY</p>
+			<div id='remaining-guesses'></div>
+			<div id='reveal-container'></div>
 		</div>
 		<div id='guesser-zone' class='flex-column'>
 			<p class='small-text'>Enter your character</p>
-			<input id='guess-input'>
+			<input id='guess-input' autofocus>
+			<p id='success-text'></p>
+			<p id='error-text'></p>
 		</div>
 	</div>
-	<script src='index.js'></script>
+	<script src='index.js'>
+	</script>
 </body>
 
 </html>
