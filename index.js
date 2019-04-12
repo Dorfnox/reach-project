@@ -166,11 +166,9 @@ function submitCharacter(c) {
 	if (c === '' || !c) {
 		updateErrorText(`Please submit a valid character!`) ;
 		return ;
-
 	} else if (game.usedChars.has(c)) {
 		updateErrorText(`You have already used '${c}'!`);
 		return ;
-
 	}
 
 	// Add character to the 'used' Map
@@ -178,16 +176,20 @@ function submitCharacter(c) {
 
 	// Check if char is in the word
 	if (game.word.includes(c)) {
-		updateSucessfulGuess(c);
+		handleSuccessfulGuess(c);
 	} else {
 		// Update unsuccessful guess
-		updateUnsuccessfulGuess(c);
+		handleUnsuccessfulGuess(c);
 	}
 }
 
 function resetSecretKeeper(length) {
-	let parentNode = document.getElementById('reveal-container');
-
+	let parentNode = document.getElementById('prior-guesses');
+	while (parentNode.firstChild) {
+		parentNode.removeChild(parentNode.firstChild);
+	}
+	
+	parentNode = document.getElementById('reveal-container');
 	// Remove any previous children
 	while (parentNode.firstChild) {
 		parentNode.removeChild(parentNode.firstChild);
@@ -213,19 +215,29 @@ function updateSuccessText(text) {
 	document.getElementById('success-text').innerText = text;
 }
 function updateGuessesRemainingText(number) {
-	document.getElementById('remaining-guesses').innerHTML = `<span style='font-size:100px;color:#464646;'>${number}</span> guesses remaining`;
+	let g = number > 1 ? 'guesses' : 'guess';
+	document.getElementById('remaining-guesses').innerHTML = `<span style='font-size:100px;color:#464646;'>${number}</span> ${g} remaining`;
 }
 
-function updateUnsuccessfulGuess(c) {
+function handleUnsuccessfulGuess(c) {
 	game.guessesRemaining -= 1;
 	updateGuessesRemainingText(game.guessesRemaining);
+
+	// Update the 'used' characters
+	let parentNode = document.getElementById('prior-guesses'),
+		child = document.createElement('p');
+	child.className = 'prior-guess';
+	child.innerText = c;
+	parentNode.appendChild(child);
+
+	// Handle Game Losss
 	if (game.guessesRemaining === 0) {
 		handleGameLoss();
 	} else {
 		updateErrorText(`'${c}' is an incorrect guess!`);
 	}
 }
-function updateSucessfulGuess(c) {
+function handleSuccessfulGuess(c) {
 	// Add to the correctly guessed-word set
 	game.correctlyGuessedChars.set(c, 1);
 
@@ -260,6 +272,14 @@ function handleGameWin() {
 function handleGameFinish(){
 	game.finished = true;
 	document.getElementById('restart-icon').style.display = 'block';
+
+	// Display whole word in guessBox.
+	let revealBox = document.getElementsByClassName('reveal-box');
+	game.word.map((c, i) => {
+		if (revealBox[i].innerText === '') {
+			revealBox[i].innerHTML = `<span style="color:firebrick;">${c}</span>`;
+		}
+	});
 }
 
 
@@ -271,7 +291,6 @@ function restartGame(options) {
 		maxString = `maxLength=${options.maxLength}`;
 		newUrl = `${url}?${difficultyString}&${minString}&${maxString}`;
 
-	console.log(newUrl);
 	// Directed through the HerokuApp to avoid a CORS issue
 	fetch(newUrl, {
 		headers: {
