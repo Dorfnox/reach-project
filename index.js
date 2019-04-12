@@ -9,6 +9,11 @@ let game = {
 	usedChars: new Map(),
 	guessesRemaining: 6,
 	finished: true,		// Initialize to true to prevent game starting before words are loaded
+	apiSettings: {
+		difficulty: 5,
+		minLength: 4,
+		maxLength: 10,
+	}
 }
 
 let gb = document.getElementById('guess-box'),
@@ -18,7 +23,7 @@ let gb = document.getElementById('guess-box'),
 
 
 
-updateWordDict();
+restartGame(game.apiSettings);
 
 
 
@@ -27,13 +32,18 @@ updateWordDict();
 
 
 
-// Reset Game Defaults. This gets called after the 'blob' is read into text in updateWordDict
+// Reset Game Defaults. This gets called after the 'blob' is read into text in restartGame
 fileReader.addEventListener('loadend', e => {
 	// Update word dictionary
 	game.wordDict = e.srcElement.result.split('\n');
 
 	// Choose random word. Put it into an array of capitalized characters: eg: ['B', 'U', 'S']
 	game.word = game.wordDict[ Math.floor( Math.random() * game.wordDict.length )].toUpperCase().split('');
+
+	if (game.word.length === 0) {
+		updateErrorText('No dictionary items for given parameters. Please try adjusting the \'Game Options\'');
+		return ;
+	}
 
 	// Update the 'wordReveal' array
 	game.wordReveal = game.word.map(c => '');
@@ -46,8 +56,9 @@ fileReader.addEventListener('loadend', e => {
 	delete game.usedChars;
 	game.usedChars = new Map();
 
-	// update the number of guesses remaining
-	updateRemainingGuesses(6);
+	// Reset the number of guesses remaining
+	game.guessesRemaining = 6;
+	updateGuessesRemainingText(game.guessesRemaining);
 
 	resetSecretKeeper(game.word.length);
 
@@ -86,18 +97,65 @@ guessInputElem.addEventListener('keydown', e => {
 	}
 });
 
-// Handle opening of settings menu
+
+// ~~~ Settings Menu Event Handlers
 document.getElementById('game-options-button').addEventListener('click', () => {
 	document.getElementById('modal-background').style.display = 'block';
 });
-
-// Handle closing of settings menu
 document.getElementById('modal-background').addEventListener('click', (e) => {
 	if (e.target.id === 'modal-background') {
 		document.getElementById('modal-background').style.display = 'none';
 	}
 });
+document.getElementById('close-settings-button').addEventListener('click', () => {
+		document.getElementById('modal-background').style.display = 'none';
+});
+document.getElementById('apply-settings-button').addEventListener('click', () => {
+	document.getElementById('modal-background').style.display = 'none';
+	restartGame(game.apiSettings);
+});
+document.getElementById('difficulty-slider').onchange = e => {
+	game.apiSettings.difficulty = parseInt(e.target.value);
+	let diff;
+	if (game.apiSettings.difficulty < 4) {
+		diff = '(easy)';
+	} else if (game.apiSettings.difficulty < 8) {
+		diff = '(medium)';
+	} else {
+		diff = '(hard)';
+	}
+	document.getElementById('difficulty-slider-text').innerText = `Difficulty ${game.apiSettings.difficulty} ${diff}`
+};
+document.getElementById('min-slider').onchange = e => {
+	let v = parseInt(e.target.value);
+	game.apiSettings.minLength= v;
+	document.getElementById('min-slider-text').innerText = `Minimum word length ${v}`;
+	if (game.apiSettings.maxLength < game.apiSettings.minLength) {
+		document.getElementById('max-slider').value = e.target.value;
+		document.getElementById('max-slider-text').innerText = `Maximum word length ${v}`;
+		game.apiSettings.maxLength = v;
+	}
+};
+document.getElementById('max-slider').onchange = e => {
+	let v = parseInt(e.target.value);
+	game.apiSettings.maxLength= v;
+	document.getElementById('max-slider-text').innerText = `Maximum word length ${v}`;
+	if (game.apiSettings.maxLength < game.apiSettings.minLength) {
+		document.getElementById('min-slider').value = e.target.value;
+		document.getElementById('min-slider-text').innerText = `Minumum word length ${v}`;s
+		game.apiSettings.minLength = v;
+	}
+};
 
+// Restart Button Event Handler
+document.getElementById('restart-icon').onclick = () => {
+	updateSuccessText('restarting game!');
+	setTimeout(() => {
+		document.getElementById('restart-icon').style.display = 'none';
+		restartGame(game.apiSettings)
+	}, 800);
+}
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
@@ -120,30 +178,10 @@ function submitCharacter(c) {
 
 	// Check if char is in the word
 	if (game.word.includes(c)) {
-		// Always clear Error text
-		updateErrorText('');
-
 		updateSucessfulGuess(c);
-
-		// Check for WIN!
-		if (!game.wordReveal.includes('')) {
-			handleGameWin();
-		} else {
-			updateSuccessText(`'${c}' was a correct guess!`);
-		}
-
 	} else {
-		// Always clear the success text
-		updateSuccessText('');
-
-		// Update remaining guesses
-		updateRemainingGuesses(game.guessesRemaining - 1);
-
-		if (game.guessesRemaining === 0) {
-			handleGameLoss();
-		} else {
-			updateErrorText(`'${c}' is an incorrect guess!`);
-		}
+		// Update unsuccessful guess
+		updateUnsuccessfulGuess(c);
 	}
 }
 
@@ -166,19 +204,27 @@ function resetSecretKeeper(length) {
 	}
 }
 
-function updateErrorText (text) {
+function updateErrorText(text) {
+	document.getElementById('success-text').innerText = '';
 	document.getElementById('error-text').innerText = text;
 }
-
-function updateSuccessText (text) {
+function updateSuccessText(text) {
+	document.getElementById('error-text').innerText = '';
 	document.getElementById('success-text').innerText = text;
 }
-
-function updateRemainingGuesses(n) {
-	game.guessesRemaining = n;
-	document.getElementById('remaining-guesses').innerHTML = `<span style='font-size:100px;color:#464646;'>${n}</span> guesses remaining`;
+function updateGuessesRemainingText(number) {
+	document.getElementById('remaining-guesses').innerHTML = `<span style='font-size:100px;color:#464646;'>${number}</span> guesses remaining`;
 }
 
+function updateUnsuccessfulGuess(c) {
+	game.guessesRemaining -= 1;
+	updateGuessesRemainingText(game.guessesRemaining);
+	if (game.guessesRemaining === 0) {
+		handleGameLoss();
+	} else {
+		updateErrorText(`'${c}' is an incorrect guess!`);
+	}
+}
 function updateSucessfulGuess(c) {
 	// Add to the correctly guessed-word set
 	game.correctlyGuessedChars.set(c, 1);
@@ -191,37 +237,51 @@ function updateSucessfulGuess(c) {
 			revealBoxElems[i].innerText = ch;
 		}
 	});
+	// Check for WIN!
+	if (!game.wordReveal.includes('')) {
+		handleGameWin();
+	} else {
+		updateSuccessText(`'${c}' was a correct guess!`);
+	}
 }
 
+// Game over Functions
 function handleGameLoss() {
-	game.finished = true;
 	document.getElementById('guess-input').style.border = '4px solid firebrick';
 	let correctWord = String(game.word.join(''));
 	updateErrorText(`Sorry you lose... the word was: ${correctWord}`);
+	handleGameFinish();
 }
-
 function handleGameWin() {
 	updateSuccessText(`YOU WIN YAHOOOO!!!!!!!`);
 	document.getElementById('guess-input').style.border = '4px solid #43a047';
-	game.finished = true;
+	handleGameFinish()
 }
-
-function getURLParamsBasedOnSettings(settings) {
-
-};
+function handleGameFinish(){
+	game.finished = true;
+	document.getElementById('restart-icon').style.display = 'block';
+}
 
 
 // Updates the game.wordDict with the new requested dictionary
-function updateWordDict(options, callbackFunc) {
+function restartGame(options) {
 	updateSuccessText('... collecting dictionary words via API');
+	let difficultyString = `difficulty=${options.difficulty}`;
+		minString = `minLength=${options.minLength}`;
+		maxString = `maxLength=${options.maxLength}`;
+		newUrl = `${url}?${difficultyString}&${minString}&${maxString}`;
 
+	console.log(newUrl);
 	// Directed through the HerokuApp to avoid a CORS issue
-	fetch(`${url}`, {
+	fetch(newUrl, {
 		headers: {
 			'Content-Type': 'text/plain;charset=UTF-8',
 		}
 	})
 	.then(response => {
+		if (response.status !== 200) {
+			throw 'error';
+		}
 		let stream = response.body;
 		let reader = stream.getReader();
 		return collectStream(reader);
@@ -234,7 +294,7 @@ function updateWordDict(options, callbackFunc) {
 		fileReader.readAsText(blob);
 	})
 	.catch(response => {
-		updateErrorText('Failed to load dictionary for some reason. Please DEBUG:\n', response);
+		updateErrorText('Failed to load dictionary. Please try different "Game Options"');
 	});
 }
 

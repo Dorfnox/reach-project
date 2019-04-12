@@ -32,6 +32,19 @@
 			padding: 20px;
 			border: 1px solid #2196f3;
 			width: 80%;
+			height: 60%;
+			display: flex;
+			flex-direction: column;
+		}
+		#game-settings-buttons {
+			display: flex;
+			justify-content: space-evenly;
+			width: 100%;
+		}
+		#game-settings-buttons button {
+			width: 40%;
+			padding: 10px;
+			margin: 10px;
 		}
 
 		#nav-bar {
@@ -130,6 +143,11 @@
 			-o-animation:      blue-shift 4s infinite; /* Opera 12+ */
 			animation:         blue-shift 4s infinite; /* IE 10+, Fx 29+ */
 		}
+		#restart-icon {
+			display: block;
+			height: 20%;
+			display: none;
+		}
 		#success-text {
 			color: green;
 		}
@@ -139,6 +157,22 @@
 		.small-text {
 			font-size: 18px;
 			font-style: italic;
+		}
+		input[type='range']{
+			-webkit-appearance: none;
+			width: 100%;
+			height: 25px;
+			background: #bbdefb;
+			outline: none;
+			opacity: 0.7;
+			-webkit-transition: .2s;
+			transition: opacity .2s;
+			border-radius: 40px;
+		}
+
+.slider:hover {
+  opacity: 1;
+}
 		}
 		@keyframes blue-shift {
   			0% { background-color: #bbdefb; }
@@ -152,12 +186,28 @@
 	<div id='nav-bar'>
 		<button id='game-options-button'>Game Options</button>
 		<div id='modal-background'>
-				<div id='game-settings'></div>
+				<div id='game-settings'>
+					<p style='font-size:30px;color:#0d47a1'>Adjust Game Settings</p>
+					<div id='game-settings-items'>
+						<p id='difficulty-slider-text'>Difficulty 5 (medium)</p>
+						<input id='difficulty-slider' type="range" min=1 max=10 value=5>
+						<p id='min-slider-text'>Minimum word length 4</p>
+						<input id='min-slider' type="range" min=1 max=12 value=4>
+						<p id='max-slider-text'>Maximum word length 13</p>
+						<input id='max-slider' type="range" min=3 max=13 value=13>
+					</div>
+					<div id='game-settings-buttons'>
+						<button id='close-settings-button'>Close</button>
+						<button id='apply-settings-button'>Apply</button>
+					</div>
+				</div>
 		</div>
 	</div>
 	<div id='game-area'>
 		<div id='secret-keeper-zone'>
-			<div id='remaining-guesses'></div>
+			<div id='remaining-guesses'>
+				<span style='font-size:100px;color:#464646;'>6</span> guesses remaining
+			</div>
 			<div id='reveal-container'></div>
 		</div>
 		<div id='guesser-zone' class='flex-column'>
@@ -165,6 +215,7 @@
 			<input id='guess-input' autofocus>
 			<p id='success-text'></p>
 			<p id='error-text'></p>
+			<img id='restart-icon' src='https://upload.wikimedia.org/wikipedia/commons/4/4e/Flat_restart_icon.svg'>
 		</div>
 	</div>
 	<script src='index.js'>
