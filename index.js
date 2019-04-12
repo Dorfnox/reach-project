@@ -18,8 +18,10 @@ let game = {
 
 let gb = document.getElementById('guess-box'),
 	guessInputElem = document.getElementById('guess-input'),
-	url = 'https://cors-anywhere.herokuapp.com/http://app.linkedin-reach.io/words',
-	fileReader = new FileReader();
+	preUrl = 'https://cors-anywhere.herokuapp.com/',
+	url = `${preUrl}http://app.linkedin-reach.io/words`,
+	linkedInReader = new FileReader(),
+	oxfordReader = new FileReader();
 
 
 
@@ -33,7 +35,7 @@ restartGame(game.apiSettings);
 
 
 // Reset Game Defaults. This gets called after the 'blob' is read into text in restartGame
-fileReader.addEventListener('loadend', e => {
+linkedInReader.addEventListener('loadend', e => {
 	// Update word dictionary
 	game.wordDict = e.srcElement.result.split('\n');
 
@@ -62,12 +64,30 @@ fileReader.addEventListener('loadend', e => {
 
 	resetSecretKeeper(game.word.length);
 
+	document.getElementById('word-definition').style.display = 'none';
+
 	// Add a little buffer to the 'Begin Game!' prompt. Don't overwrite if user is arleady guessing.
 	setTimeout(() => {
 		updateSuccessText('Begin Game!');
 		document.getElementById('guess-input').style.border = '4px solid #2196f3';
 		game.finished = false; // Game is now playable
 	}, 800);
+});
+
+
+// This runs when a dictionary word is returned
+// Updates the 'Definition' of the word
+oxfordReader.addEventListener('loadend', e => {
+	let result = JSON.parse(e.srcElement.result);
+
+	let definition ='No dictionary entry was found';
+	try {
+		definition = result.results[0].lexicalEntries[0].entries[0].senses[0].definitions[0];
+	} catch (err) {
+		definition ='No dictionary entry was found';
+	}
+	document.getElementById('word-definition-item').innerText = definition;
+	document.getElementById('word-definition').style.display = 'flex';
 });
 
 
@@ -184,20 +204,22 @@ function submitCharacter(c) {
 }
 
 function resetSecretKeeper(length) {
+
+	// Remove 'Prior Guesses'
 	let parentNode = document.getElementById('prior-guesses');
 	while (parentNode.firstChild) {
 		parentNode.removeChild(parentNode.firstChild);
 	}
-	
+
+	// Remove 'Revealed Words'
 	parentNode = document.getElementById('reveal-container');
-	// Remove any previous children
 	while (parentNode.firstChild) {
 		parentNode.removeChild(parentNode.firstChild);
 	}
 
 	let individualWidth = 100 / length;
 
-	// Add new empty boxes
+	// Add new empty 'Revealed words' boxes
 	while (length--) {
 		let child = document.createElement('div');
 		child.className = 'reveal-box';
@@ -271,7 +293,6 @@ function handleGameWin() {
 }
 function handleGameFinish(){
 	game.finished = true;
-	document.getElementById('restart-icon').style.display = 'block';
 
 	// Display whole word in guessBox.
 	let revealBox = document.getElementsByClassName('reveal-box');
@@ -280,6 +301,42 @@ function handleGameFinish(){
 			revealBox[i].innerHTML = `<span style="color:firebrick;">${c}</span>`;
 		}
 	});
+
+	// Display the Restart Icon
+	document.getElementById('restart-icon').style.display = 'block';
+
+	// Call Oxford Dictionary's API to retrieve the definition of the word
+	getWordDefinition(game.word.join(''));
+}
+
+
+// Gathers the word definition for the Oxford Dictionary (using my free account!)
+function getWordDefinition(word) {
+	word = encodeURI(word.toLowerCase().replace(' ', '_'));
+	fetch(`${preUrl}https://od-api.oxforddictionaries.com/api/v1/entries/en/${word}`, {
+		headers: {
+			'app_id': '763c3e51',
+			'app_key': '511ea021798a93d039ada325ef807ecf'
+		}
+	})
+	.then(response => {
+		if (response.status !== 200) {
+			throw 'error';
+		}
+		let stream = response.body;
+		let reader = stream.getReader();
+		return collectStream(reader);
+	})
+	.then(stream => new Response(stream))
+	.then(response => response.blob())
+	.then(blob => {
+		// Update the word definition
+		oxfordReader.readAsText(blob);
+	})
+	.catch(err => {
+		document.getElementById('word-definition-item').innerText = 'No dictionary entry located';
+		document.getElementById('word-definition').style.display = 'flex';
+	})
 }
 
 
@@ -310,7 +367,7 @@ function restartGame(options) {
 	.then(blob => {
 		// Update the word Dictionary
 		updateSuccessText('... updating default game settings');
-		fileReader.readAsText(blob);
+		linkedInReader.readAsText(blob);
 	})
 	.catch(response => {
 		updateErrorText('Failed to load dictionary. Please try different "Game Options"');
