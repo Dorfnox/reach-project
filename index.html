@@ -55,11 +55,16 @@
 			height: 10%;
 			display: flex;
 			flex-wrap: wrap;
-			justify-content:flex-end;
+			justify-content:space-between;
+		}
+		#title {
+			font-size: 40px;
+			color: white;
+			padding: 0px 20px;
 		}
 		#nav-bar button {
 			height: 100%;
-			padding: 10px;
+			padding: 0 20px;
 			border: none;
 			outline: none;
 			background-color: #2196f3;
@@ -201,6 +206,7 @@
 
 <body>
 	<div id='nav-bar'>
+		<p id='title'>A Most Excellent Hangman Game</p>
 		<button id='game-options-button'>Game Options</button>
 		<div id='modal-background'>
 				<div id='game-settings'>

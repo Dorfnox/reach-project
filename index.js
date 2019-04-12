@@ -237,7 +237,7 @@ function updateSuccessText(text) {
 	document.getElementById('success-text').innerText = text;
 }
 function updateGuessesRemainingText(number) {
-	let g = number > 1 ? 'guesses' : 'guess';
+	let g = number === 1 ? 'guesses' : 'guess';
 	document.getElementById('remaining-guesses').innerHTML = `<span style='font-size:100px;color:#464646;'>${number}</span> ${g} remaining`;
 }
 
